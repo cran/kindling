@@ -16,17 +16,28 @@
 #'   Can be tuned.
 #' @param bias Logical for whether to include bias terms. Can be tuned.
 #' @param epochs An integer for the number of training iterations. Can be tuned.
+#' @param penalty A number for the regularization penalty (lambda). Default `0` 
+#'   (no regularization). Higher values increase regularization strength. Can be tuned.
+#' @param mixture A number between 0 and 1 for the elastic net mixing parameter. 
+#'   Default `0` (pure L2/Ridge regularization).
+#'   - `0`: Pure L2 regularization (Ridge)
+#'   - `1`: Pure L1 regularization (Lasso)
+#'   - `0 < mixture < 1`: Elastic net (combination of L1 and L2)
+#'   Only relevant when `penalty > 0`. Can be tuned.
 #' @param batch_size An integer for the batch size during training. Can be tuned.
 #' @param learn_rate A number for the learning rate. Can be tuned.
 #' @param optimizer A character string for the optimizer type ("adam", "sgd",
 #'   "rmsprop"). Can be tuned.
+#' @param optimizer_args A named list of additional arguments passed to the optimizer.
+#'   Cannot be tuned.
 #' @param loss A character string for the loss function ("mse", "mae",
-#'   "cross_entropy", "bce"). Can be tuned.
+#'   "cross_entropy", "bce"). Cannot be tuned.
 #' @param validation_split A number between 0 and 1 for the proportion of data
 #'   used for validation. Can be tuned.
 #' @param device A character string for the device to use ("cpu", "cuda", "mps").
-#'   If NULL, auto-detects available GPU. Can be tuned.
+#'   If NULL, auto-detects available GPU. Cannot be tuned.
 #' @param verbose Logical for whether to print training progress. Default FALSE.
+#'   Cannot be tuned.
 #'
 #' @details
 #' This function creates a model specification for a feedforward neural network
@@ -51,7 +62,6 @@
 #' When tuning, you can use special tune tokens:
 #' - For `hidden_neurons`: use `tune("hidden_neurons")` with a custom range
 #' - For `activation`: use `tune("activation")` with values like "relu", "tanh"
-#' - For `device`: use `tune("device")` to compare CPU vs GPU performance
 #'
 #' @return A model specification object with class `mlp_kindling`.
 #'
@@ -102,44 +112,50 @@ mlp_kindling =
         bias = NULL,
         epochs = NULL,
         batch_size = NULL,
+        penalty = NULL,
+        mixture = NULL,
         learn_rate = NULL,
         optimizer = NULL,
+        optimizer_args = NULL,
         loss = NULL,
         validation_split = NULL,
         device = NULL,
         verbose = NULL
     ) {
-
-    if (!requireNamespace("parsnip", quietly = TRUE)) {
-        cli::cli_abort("Package {.pkg parsnip} is required but not installed.")
+        
+        if (!requireNamespace("parsnip", quietly = TRUE)) {
+            cli::cli_abort("Package {.pkg parsnip} is required but not installed.")
+        }
+        
+        args = list(
+            hidden_neurons = rlang::enquo(hidden_neurons),
+            activations = rlang::enquo(activations),
+            output_activation = rlang::enquo(output_activation),
+            bias = rlang::enquo(bias),
+            epochs = rlang::enquo(epochs),
+            batch_size = rlang::enquo(batch_size),
+            penalty = rlang::enquo(penalty),
+            mixture = rlang::enquo(mixture),
+            learn_rate = rlang::enquo(learn_rate),
+            optimizer = rlang::enquo(optimizer),
+            optimizer_args = rlang::enquo(optimizer_args),
+            loss = rlang::enquo(loss),
+            validation_split = rlang::enquo(validation_split),
+            device = rlang::enquo(device),
+            verbose = rlang::enquo(verbose)
+        )
+        
+        parsnip::new_model_spec(
+            "mlp_kindling",
+            args = args,
+            eng_args = NULL,
+            mode = mode,
+            user_specified_mode = !missing(mode),
+            method = NULL,
+            engine = engine,
+            user_specified_engine = !missing(engine)
+        )
     }
-
-    args = list(
-        hidden_neurons = rlang::enquo(hidden_neurons),
-        activations = rlang::enquo(activations),
-        output_activation = rlang::enquo(output_activation),
-        bias = rlang::enquo(bias),
-        epochs = rlang::enquo(epochs),
-        batch_size = rlang::enquo(batch_size),
-        learn_rate = rlang::enquo(learn_rate),
-        optimizer = rlang::enquo(optimizer),
-        loss = rlang::enquo(loss),
-        validation_split = rlang::enquo(validation_split),
-        device = rlang::enquo(device),
-        verbose = rlang::enquo(verbose)
-    )
-
-    parsnip::new_model_spec(
-        "mlp_kindling",
-        args = args,
-        eng_args = NULL,
-        mode = mode,
-        user_specified_mode = !missing(mode),
-        method = NULL,
-        engine = engine,
-        user_specified_engine = !missing(engine)
-    )
-}
 
 #' @export
 print.mlp_kindling = function(x, ...) {
@@ -160,8 +176,11 @@ update.mlp_kindling =
         bias = NULL,
         epochs = NULL,
         batch_size = NULL,
+        penalty = NULL,
+        mixture = NULL,
         learn_rate = NULL,
         optimizer = NULL,
+        optimizer_args = NULL,
         loss = NULL,
         validation_split = NULL,
         device = NULL,
@@ -169,31 +188,34 @@ update.mlp_kindling =
         fresh = FALSE,
         ...
     ) {
-
-    args = list(
-        hidden_neurons = rlang::enquo(hidden_neurons),
-        activations = rlang::enquo(activations),
-        output_activation = rlang::enquo(output_activation),
-        bias = rlang::enquo(bias),
-        epochs = rlang::enquo(epochs),
-        batch_size = rlang::enquo(batch_size),
-        learn_rate = rlang::enquo(learn_rate),
-        optimizer = rlang::enquo(optimizer),
-        loss = rlang::enquo(loss),
-        validation_split = rlang::enquo(validation_split),
-        device = rlang::enquo(device),
-        verbose = rlang::enquo(verbose)
-    )
-
-    parsnip::update_spec(
-        object = object,
-        parameters = parameters,
-        args_enquo_list = args,
-        fresh = fresh,
-        cls = "mlp_kindling",
-        ...
-    )
-}
+        
+        args = list(
+            hidden_neurons = rlang::enquo(hidden_neurons),
+            activations = rlang::enquo(activations),
+            output_activation = rlang::enquo(output_activation),
+            bias = rlang::enquo(bias),
+            epochs = rlang::enquo(epochs),
+            batch_size = rlang::enquo(batch_size),
+            penalty = rlang::enquo(penalty),
+            mixture = rlang::enquo(mixture),
+            learn_rate = rlang::enquo(learn_rate),
+            optimizer = rlang::enquo(optimizer),
+            optimizer_args = rlang::enquo(optimizer_args),
+            loss = rlang::enquo(loss),
+            validation_split = rlang::enquo(validation_split),
+            device = rlang::enquo(device),
+            verbose = rlang::enquo(verbose)
+        )
+        
+        parsnip::update_spec(
+            object = object,
+            parameters = parameters,
+            args_enquo_list = args,
+            fresh = fresh,
+            cls = "mlp_kindling",
+            ...
+        )
+    }
 
 #' @export
 #' @importFrom parsnip translate
@@ -201,7 +223,7 @@ translate.mlp_kindling = function(x, engine = x$engine, ...) {
     if (is.null(engine)) {
         cli::cli_abort("Please set an engine with `set_engine()`.")
     }
-
+    
     x = parsnip::translate.default(x, engine, ...)
     x
 }
@@ -212,8 +234,8 @@ tunable.mlp_kindling = function(x, ...) {
     tibble::tibble(
         name = c(
             "hidden_neurons", "activations", "output_activation", "bias",
-            "epochs", "batch_size", "learn_rate", "optimizer",
-            "loss", "validation_split"
+            "epochs", "batch_size", "penalty", "mixture",
+            "learn_rate", "optimizer", "validation_split"
         ),
         call_info = list(
             list(pkg = "kindling", fun = "hidden_neurons"),
@@ -222,9 +244,10 @@ tunable.mlp_kindling = function(x, ...) {
             list(pkg = "kindling", fun = "bias"),
             list(pkg = "dials", fun = "epochs"),
             list(pkg = "dials", fun = "batch_size"),
+            list(pkg = "dials", fun = "penalty"),
+            list(pkg = "dials", fun = "mixture"),
             list(pkg = "dials", fun = "learn_rate"),
             list(pkg = "kindling", fun = "optimizer"),
-            list(pkg = "dials", fun = "loss"),
             list(pkg = "kindling", fun = "validation_split")
         ),
         source = "model_spec",

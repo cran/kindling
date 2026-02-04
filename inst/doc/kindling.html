@@ -349,14 +349,24 @@ guide you through the basic usage.</p>
 </div>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Install from GitHub</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">&quot;joshuamarie/kindling&quot;</span>)</span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(kindling)</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;kindling&#39;</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; The following object is masked from &#39;package:base&#39;:</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt;     args</span></span></code></pre></div>
+<p>You can install <code>{kindling}</code> on CRAN:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&#39;kindling&#39;</span>)</span></code></pre></div>
+<p>Or install the development version from GitHub:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># install.packages(&quot;pak&quot;)</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">&quot;joshuamarie/kindling&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="do">## devtools::install_github(&quot;joshuamarie/kindling&quot;) </span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(kindling)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;kindling&#39;</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; The following object is masked from &#39;package:base&#39;:</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;     args</span></span></code></pre></div>
+</div>
+<div id="before-using-kindling" class="section level2">
+<h2>Before using {kindling}</h2>
+<p>Before starting, you need to install LibTorch, the backend of PyTorch
+which also the backend of <code>{torch}</code> R package:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>torch<span class="sc">::</span><span class="fu">install_torch</span>()</span></code></pre></div>
 </div>
 <div id="four-levels-of-interaction" class="section level2">
 <h2>Four Levels of Interaction</h2>
@@ -377,47 +387,47 @@ calls</li>
 <div id="level-1-code-generation" class="section level2">
 <h2>Level 1: Code Generation</h2>
 <p>Generate PyTorch-style module code:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">ffnn_generator</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>    <span class="at">nn_name =</span> <span class="st">&quot;MyNetwork&quot;</span>,</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>    <span class="at">hd_neurons =</span> <span class="fu">c</span>(<span class="dv">64</span>, <span class="dv">32</span>),</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    <span class="at">no_x =</span> <span class="dv">10</span>,</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="at">no_y =</span> <span class="dv">1</span>,</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="at">activations =</span> <span class="st">&#39;relu&#39;</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">ffnn_generator</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>    <span class="at">nn_name =</span> <span class="st">&quot;MyNetwork&quot;</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="at">hd_neurons =</span> <span class="fu">c</span>(<span class="dv">64</span>, <span class="dv">32</span>),</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    <span class="at">no_x =</span> <span class="dv">10</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="at">no_y =</span> <span class="dv">1</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="at">activations =</span> <span class="st">&#39;relu&#39;</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="level-2-direct-training" class="section level2">
 <h2>Level 2: Direct Training</h2>
 <p>Train a model with one function call:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>model <span class="ot">=</span> <span class="fu">ffnn</span>(</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>    Species <span class="sc">~</span> .,</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="at">data =</span> iris,</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">7</span>),</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, elu),</span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="at">loss =</span> <span class="st">&quot;cross_entropy&quot;</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">100</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>)</span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>predictions <span class="ot">=</span> <span class="fu">predict</span>(model, <span class="at">newdata =</span> iris)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>model <span class="ot">=</span> <span class="fu">ffnn</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>    Species <span class="sc">~</span> .,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="at">data =</span> iris,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">7</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, elu), <span class="co"># c(&quot;relu&quot;, &quot;elu&quot;)</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="at">loss =</span> <span class="st">&quot;cross_entropy&quot;</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">100</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>predictions <span class="ot">=</span> <span class="fu">predict</span>(model, <span class="at">newdata =</span> iris)</span></code></pre></div>
 </div>
 <div id="level-3-tidymodels-integration" class="section level2">
 <h2>Level 3: tidymodels Integration</h2>
 <p>Work with neural networks like any other <code>parsnip</code>
 model:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>box<span class="sc">::</span><span class="fu">use</span>(</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>    parsnip[fit, augment],</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    yardstick[metrics]</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>)</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>nn_spec <span class="ot">=</span> <span class="fu">mlp_kindling</span>(</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">7</span>),</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, <span class="at">softshrink =</span> <span class="fu">args</span>(<span class="at">lambd =</span> <span class="fl">0.5</span>)),</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">100</span></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>)</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>nn_fit <span class="ot">=</span> <span class="fu">fit</span>(nn_spec, Species <span class="sc">~</span> ., <span class="at">data =</span> iris)</span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">augment</span>(nn_fit, <span class="at">new_data =</span> iris) <span class="sc">|&gt;</span> </span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="fu">metrics</span>(<span class="at">truth =</span> Species, <span class="at">estimate =</span> .pred_class)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>box<span class="sc">::</span><span class="fu">use</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>    parsnip[fit, augment],</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    yardstick[metrics]</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>nn_spec <span class="ot">=</span> <span class="fu">mlp_kindling</span>(</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">7</span>),</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, <span class="at">softshrink =</span> <span class="fu">args</span>(<span class="at">lambd =</span> <span class="fl">0.5</span>)),</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">100</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>nn_fit <span class="ot">=</span> <span class="fu">fit</span>(nn_spec, Species <span class="sc">~</span> ., <span class="at">data =</span> iris)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="fu">augment</span>(nn_fit, <span class="at">new_data =</span> iris) <span class="sc">|&gt;</span> </span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>    <span class="fu">metrics</span>(<span class="at">truth =</span> Species, <span class="at">estimate =</span> .pred_class)</span></code></pre></div>
 </div>
 <div id="learn-more" class="section level2">
 <h2>Learn More</h2>

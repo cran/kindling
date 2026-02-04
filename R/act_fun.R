@@ -48,7 +48,7 @@ args = function(...) {
 #' @importFrom rlang enquos quo_get_expr is_call call_name as_string
 #' @importFrom cli cli_abort
 #' @importFrom vctrs new_vctr
-#' 
+#'
 #' @export
 act_funs = function(...) {
     dots = enquos(...)

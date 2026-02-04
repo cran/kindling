@@ -1,25 +1,54 @@
-# kindling 0.1.1
+# kindling (development version)
 
-## Bug fixes / CRAN compliance
+# kindling 0.2.0
 
-* All tests that require torch/LibTorch are now properly skipped on CRAN
-* Removed or skipped tests that assumed torch is not loaded
-* Fixed title case in DESCRIPTION
-* Corrected/removed invalid URLs
+## New features
 
-# kindling 0.1.2
+-   Added regularization support for neural network models
 
-## Resubmission
+    -   L1 regularization (Lasso) for feature selection via `mixture = 1`
+    -   L2 regularization (Ridge) for weight decay via `mixture = 0`
+    -   Elastic Net combining L1 and L2 penalties via `0 < mixture < 1`
+    -   Controlled via `penalty` (regularization strength) and `mixture` (L1/L2 balance) parameters
+    -   Follows tidymodels conventions for consistency with `glmnet` and other packages
 
-This is a resubmission.
+-   `n_hlayers()` now fully supports tuning the number of hidden layers
 
-In this version I have:
+-   `hidden_neurons()` gains support for discrete values via the `disc_values` argument 
 
-* Bumped version to 0.1.2
-* Fixed title case in DESCRIPTION
-* Removed invalid/unreachable URLs
-* Wrapped all examples that require torch in `if (torch::torch_is_installed()) { … }`
+    -   e.g. `disc_values = c(32L, 64L, 128L, 256L)`) is now allowed
+    -   This allows tuning over specific common hidden unit sizes instead of (or in addition to) a continuous range
+
+## Implementation fixes
+
+-   Tuning methods and `grid_depth()` is now fixed
+
+    -   Parameter space for the number of hidden layers is now fixed and active
+    -   Corrected parameter space handling for `n_hlayers` (no more invalid sampling when `x > 1`)
+    -   Uses `tidyr::expand_grid()`, not `purrr::cross*()`
+    -   Fix randomization of parameter space which will produce NAs outside from `{kindling}`'s own 'dials'
+    -   No more list columns when `n_hlayers = 1`
+
+-   The supported models now use `hardhat::mold()`, instead of `model.frame()` and `model.matrix()`.
+
+## Documentation
+
+-   Add a vignette to showcase the comparison with other similar packages
+-   The package description got few clarifications
+-   Vignette to showcase the comparison with other similar packages
+-   `hidden_neurons` parameter now supports discrete values specification
+
+    -   Users can specify exact neuron counts via `values` parameter (e.g., `hidden_neurons(values = c(32, 64, 128))`)
+    -   Maintains backward compatibility with range-based parameters (e.g., `hidden_neurons(range = c(8L, 512L))` / `hidden_neurons(c(8L, 512L))`)
+
+-   Added `\value` documentation to `kindling-nn-wrappers` for CRAN compliance
+-   Documented argument handling and list-column unwrapping in tidymodels wrapper functions
+-   Clarified the relationship between `grid_depth()` and wrapper functions
 
 # kindling 0.1.0
 
-* Initial CRAN submission.
+-   Initial CRAN release
+-   Higher-level interface for torch package to define, train, and tune neural networks
+-   Support for feedforward (multi-layer perceptron) and recurrent networks (RNN, LSTM, GRU)
+-   Integration with tidymodels ecosystem (parsnip, workflows, recipes, tuning)
+-   Variable importance plots and network visualization tools

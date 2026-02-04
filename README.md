@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# kindling: Higher-level interface of torch package to auto-train neural networks <img src="man/figures/logo.png" align="right" alt="" width="120"/>
+# kindling <img src="man/figures/logo.png" align="right" alt="" width="120"/>
 
 <!-- badges: start -->
 
@@ -10,33 +10,39 @@ status](https://www.r-pkg.org/badges/version/kindling)](https://CRAN.R-project.o
 [![R-CMD-check](https://github.com/joshuamarie/kindling/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/joshuamarie/kindling/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-> **Note**: This package is under active development. The API may change
-> in future versions.
+<!-- > **Note**: This package is under active development. The API may change in future versions. -->
 
-## Overview
+## Package overview
 
-`{kindling}` bridges the gap between **{torch}** and **{tidymodels}**,
-offering a streamlined interface for building, training, and tuning deep
-learning models within the familiar `tidymodels` ecosystem.
+Title: ***Higher-Level Interface of ‘torch’ Package to Auto-Train Neural
+Networks***
 
-Whether you’re prototyping neural architectures or deploying production
-models, `{kindling}` minimizes boilerplate code while preserving the
-flexibility of `{torch}`. It works seamlessly with `{parsnip}`,
-`{recipes}`, and `{workflows}` to bring deep learning into your existing
-modeling pipeline.
+Whether you’re generating neural network architectures expressions or
+fitting/training actual models, `{kindling}` minimizes boilerplate code
+while preserving `{torch}`. Since this package uses `{torch}` as its
+backend, GPU/TPU devices also supported.
 
-### Key Features
+`{kindling}` also bridges the gap between `{torch}` and `{tidymodels}`.
+It works seamlessly with `{parsnip}`, `{recipes}`, and `{workflows}` to
+bring deep learning into your existing `{tidymodels}` modeling pipeline.
+This enables a streamlined interface for building, training, and tuning
+deep learning models within the familiar `{tidymodels}` ecosystem.
 
-- Seamless integration with `parsnip` through `set_engine("kindling")`
-- Native support for `{tidymodels}` workflows and pipelines
-- Multiple architectures available: feedforward networks (DNN/FFNN) and
-  recurrent variants (RNN, LSTM, GRU)
+### Main Features
+
+<!-- -   Seamless integration with `parsnip` through `set_engine("kindling")` -->
+
+- Code generation of `{torch}` expression
+- Multiple architectures available: feedforward networks (MLP/DNN/FFNN)
+  and recurrent variants (RNN, LSTM, GRU)
+- Native support for titanic ML frameworks (currently supports
+  `{tidymodels}`, `{mlr3}` for later) workflows and pipelines
 - Fine-grained control over network depth, layer sizes, and activation
   functions
-- Full GPU acceleration via `{torch}` tensors
-- Dramatically less boilerplate than raw `{torch}` implementations
+- GPU acceleration supports via `{torch}` tensors
+  <!-- -   Dramatically less boilerplate than raw `{torch}` implementations -->
 
-### Supported Architectures
+### Supported Architectures (As of now)
 
 - **Feedforward Networks (DNN/FFNN)**: Classic multi-layer perceptrons
   for tabular data and general supervised learning
@@ -60,13 +66,14 @@ Or install the development version from GitHub:
 ``` r
 # install.packages("pak")
 pak::pak("joshuamarie/kindling")
+## devtools::install_github("joshuamarie/kindling") 
 ```
 
-## Usage: Four Levels of Interaction
+## Usage: Three Levels of Interaction
 
-`{kindling}` leverages R’s metaprogramming capabilities through *code
-generation*. Generated `torch::nn_module` expressions power the training
-functions, which in turn serve as engines for `{tidymodels}`
+`{kindling}` is powered by R’s metaprogramming capabilities through
+*code generation*. Generated `torch::nn_module()` expressions power the
+training functions, which in turn serve as engines for `{tidymodels}`
 integration. This architecture gives you flexibility to work at whatever
 abstraction level suits your task.
 
@@ -77,6 +84,13 @@ library(kindling)
 #> The following object is masked from 'package:base':
 #> 
 #>     args
+```
+
+Before starting, you need to install LibTorch, the backend of PyTorch
+which also the backend of `{torch}` R package:
+
+``` r
+torch::install_torch()
 ```
 
 ### Level 1: Code Generation for `torch::nn_module`
@@ -121,7 +135,8 @@ activation, while the output layer remains “untransformed”.
 ### Level 2: Direct Training Interface
 
 Skip the code generation and train models directly with your data. This
-approach handles all the `{torch}` boilerplate internally.
+approach handles all the `{torch}` boilerplate when training the models
+internally.
 
 Let’s classify iris species:
 
@@ -130,10 +145,11 @@ model = ffnn(
     Species ~ .,
     data = iris,
     hidden_neurons = c(10, 15, 7),
-    activations = act_funs(relu, softshrink = args(lambd = 0.5), elu),
+    activations = act_funs(relu, softshrink = args(lambd = 0.5), elu), 
     loss = "cross_entropy",
     epochs = 100
 )
+
 model
 ```
 
@@ -143,13 +159,13 @@ model
 
     -- FFNN Model Summary ----------------------------------------------------------
 
-         ----------------------------------------------------------------------
-           NN Model Type           :             FFNN    n_predictors :     4
-           Number of Epochs        :              100    n_response   :     3
-           Hidden Layer Units      :        10, 15, 7    Device       :   cpu
-           Number of Hidden Layers :                3                 :      
-           Pred. Type              :   classification                 :      
-         ----------------------------------------------------------------------
+        -----------------------------------------------------------------------
+          NN Model Type           :             FFNN    n_predictors :      4
+          Number of Epochs        :              100    n_response   :      3
+          Hidden Layer Units      :        10, 15, 7    reg.         :   None
+          Number of Hidden Layers :                3    Device       :    cpu
+          Pred. Type              :   classification                 :       
+        -----------------------------------------------------------------------
 
 
 
@@ -162,36 +178,40 @@ model
                      Output Activation :   No act function applied
                    -------------------------------------------------
 
-The `predict()` method offers flexible prediction behavior through its
-`newdata` argument:
+Evaluate the prediction through `predict()`. The `predict()` method is
+extended for fitted models through its `newdata` argument.
 
-1.  **Without new data** — predictions default to the training set:
+Two kinds of `predict()` usage:
+
+1.  **Without `newdata`** predictions is the default to the parent data
+    frame.
 
     ``` r
-    predict(model) |> 
+    predict(model) |>
         (\(x) table(actual = iris$Species, predicted = x))()
     #>             predicted
     #> actual       setosa versicolor virginica
     #>   setosa         50          0         0
-    #>   versicolor      0         47         3
-    #>   virginica       0          1        49
+    #>   versicolor      0         46         4
+    #>   virginica       0          2        48
     ```
 
-2.  **With new data** — simply pass a data frame:
+2.  **With `newdata`** simply pass the new data frame as the new
+    reference.
 
     ``` r
     sample_iris = dplyr::slice_sample(iris, n = 10, by = Species)
 
-    predict(model, newdata = sample_iris) |> 
+    predict(model, newdata = sample_iris) |>
         (\(x) table(actual = sample_iris$Species, predicted = x))()
     #>             predicted
     #> actual       setosa versicolor virginica
     #>   setosa         10          0         0
-    #>   versicolor      0          9         1
+    #>   versicolor      0         10         0
     #>   virginica       0          1         9
     ```
 
-### Level 3: Full tidymodels Integration
+### Level 3: Conventional tidymodels Integration
 
 Work with neural networks just like any other `{parsnip}` model. This
 unlocks the entire `{tidymodels}` toolkit for preprocessing,
@@ -244,25 +264,31 @@ rnn_kindling(
 #> 2 kap      binary         0
 ```
 
-### Level 4: Hyperparameter Tuning & Resampling
+## Hyperparameter Tuning & Resampling
 
-> This functionality is available, but still not fully optimized.
+<!-- > This functionality is available, but still not fully optimized. -->
 
-The roadmap includes full support for hyperparameter tuning via `{tune}`
-with searchable parameters:
+The package has integration with `{tidymodels}`, so it supports
+hyperparameter tuning via `{tune}` with searchable parameters.
 
-- Network depth (number of hidden layers - coming soon)
+The current searchable parameters under `{kindling}`:
+
 - Layer widths (neurons per layer)
+- Network depth (number of hidden layers)
 - Activation function combinations
 - Output activation
 - Optimizer (Type of optimization algorithm)
 - Bias (choose between the presence and the absence of the bias term)
 - Validation Split Proportion
-- Bidirectional (only for RNN)
+- Bidirectional (boolean; only for RNN)
+
+The searchable parameters outside from `{kindling}`, i.e. under
+`{dials}` package such as `learn_rate()` also supported.
 
 Here’s an example:
 
 ``` r
+# library(tidymodels)
 box::use(
     kindling[
         mlp_kindling, hidden_neurons, activations, output_activation, grid_depth
@@ -288,13 +314,6 @@ nn_wf = workflow() |>
     add_recipe(recipe(Species ~ ., data = iris)) |>
     add_model(mlp_tune_spec)
 
-nn_grid = grid_random(
-    hidden_neurons(c(32L, 128L)),
-    activations(c("relu", "elu")),
-    output_activation(c("sigmoid", "linear")),
-    size = 10
-)
-
 nn_grid_depth = grid_depth(
     hidden_neurons(c(32L, 128L)),
     activations(c("relu", "elu")),
@@ -303,6 +322,14 @@ nn_grid_depth = grid_depth(
     size = 10,
     type = "latin_hypercube"
 )
+
+# This is supported but limited to 1 hidden layer only
+## nn_grid = grid_random(
+##     hidden_neurons(c(32L, 128L)),
+##     activations(c("relu", "elu")),
+##     output_activation(c("sigmoid", "linear")),
+##     size = 10
+## )
 
 nn_tunes = tune::tune_grid(
     nn_wf,
@@ -341,21 +368,21 @@ networks. Two primary algorithms are available:
     ``` r
     garson(model, bar_plot = FALSE)
     #>        x_names y_names  rel_imp
-    #> 1  Petal.Width Species 30.38174
-    #> 2 Petal.Length Species 25.83497
-    #> 3 Sepal.Length Species 22.78038
-    #> 4  Sepal.Width Species 21.00291
+    #> 1  Sepal.Width       y 29.04598
+    #> 2  Petal.Width       y 27.50590
+    #> 3 Sepal.Length       y 24.20982
+    #> 4 Petal.Length       y 19.23830
     ```
 
 2.  Olden’s Algorithm
 
     ``` r
     olden(model, bar_plot = FALSE)
-    #>        x_names y_names      rel_imp
-    #> 1  Petal.Width Species  0.575948477
-    #> 2  Sepal.Width Species -0.286548868
-    #> 3 Sepal.Length Species -0.204277142
-    #> 4 Petal.Length Species  0.006615014
+    #>        x_names y_names     rel_imp
+    #> 1  Sepal.Width       y  0.56231712
+    #> 2  Petal.Width       y -0.51113650
+    #> 3 Petal.Length       y -0.29761552
+    #> 4 Sepal.Length       y -0.06857191
     ```
 
 ### Integration with {vip}
@@ -377,6 +404,168 @@ vi(model) |>
 *Note: Weight caching increases memory usage proportional to network
 size. Only enable it when you plan to compute variable importance
 multiple times on the same model.*
+
+<!-- ## Comparison with other packages -->
+
+<!-- ```{r, echo=FALSE} -->
+
+<!-- comparison = data.frame( -->
+
+<!--     Feature = c( -->
+
+<!--         "**Primary Focus**", -->
+
+<!--         "**Design Philosophy**", -->
+
+<!--         "**Architectures**", -->
+
+<!--         "**Code Generation**", -->
+
+<!--         "**tidymodels Integration**", -->
+
+<!--         "**Formula Syntax**", -->
+
+<!--         "**Layer-specific Activations**", -->
+
+<!--         "**GPU Support**", -->
+
+<!--         "**Explainability/xAI**", -->
+
+<!--         "**Statistical Inference**", -->
+
+<!--         "**Custom Loss Functions**", -->
+
+<!--         "**For whom?**" -->
+
+<!--     ), -->
+
+<!--     kindling = c( -->
+
+<!--         "Architectural versatility & flexibility, statistical modelling, and code generation", -->
+
+<!--         "Three-level API (code gen, training, ML framework (currently tidymodels) integration)", -->
+
+<!--         "Versatile — Feedforward Neural Networks (DNN/FFNN/MLP), Recurrent Neural Networks (RNN, LSTM, GRU), and more (in the future)", -->
+
+<!--         "Yes (inspect & modify torch code)", -->
+
+<!--         "Full (parsnip models & tuning)", -->
+
+<!--         "Yes", -->
+
+<!--         "Yes", -->
+
+<!--         "Yes", -->
+
+<!--         "Garson's & Olden's algorithms, vip integration, and more in the future", -->
+
+<!--         "Not yet implemented", -->
+
+<!--         "Yes", -->
+
+<!--         "Wants versatile architectures (more in the future), fine-grained control, tidymodels users" -->
+
+<!--     ), -->
+
+<!--     brulee = c( -->
+
+<!--         "Production-ready statistical models", -->
+
+<!--         "Batteries-included with sensible defaults", -->
+
+<!--         "MLP, Linear/Logistic/Multinomial regression", -->
+
+<!--         "No", -->
+
+<!--         "Full (official tidymodels package)", -->
+
+<!--         "Yes", -->
+
+<!--         "No", -->
+
+<!--         "Yes", -->
+
+<!--         "Limited", -->
+
+<!--         "No", -->
+
+<!--         "No", -->
+
+<!--         "Wants standard supervised learning, stable production models" -->
+
+<!--     ), -->
+
+<!--     cito = c( -->
+
+<!--         "Statistical inference & interpretation", -->
+
+<!--         "User-friendly with comprehensive xAI pipeline", -->
+
+<!--         "Fully-connected networks, CNNs", -->
+
+<!--         "No", -->
+
+<!--         "No (standalone package)", -->
+
+<!--         "Yes", -->
+
+<!--         "No", -->
+
+<!--         "Yes (CPU, GPU, MacOS)", -->
+
+<!--         "Extensive (PDP, ALE, variable importance, etc.)", -->
+
+<!--         "Yes (confidence intervals, p-values via bootstrap)", -->
+
+<!--         "Yes", -->
+
+<!--         "Do ecological modeling, interpretable models, statistical inference" -->
+
+<!--     ), -->
+
+<!--     luz = c( -->
+
+<!--         "Training loop abstraction", -->
+
+<!--         "High-level API reducing boilerplate", -->
+
+<!--         "Any torch nn_module", -->
+
+<!--         "No", -->
+
+<!--         "No (standalone package)", -->
+
+<!--         "No (uses torch modules directly)", -->
+
+<!--         "No (also uses torch modules directly)", -->
+
+<!--         "Yes (automatic device placement)", -->
+
+<!--         "No", -->
+
+<!--         "No", -->
+
+<!--         "Yes", -->
+
+<!--         "Wants custom architectures, users needing human-friendly training loop control" -->
+
+<!--     ), -->
+
+<!--     stringsAsFactors = FALSE -->
+
+<!-- ) -->
+
+<!-- knitr::kable( -->
+
+<!--     comparison,  -->
+
+<!--     col.names = c("Feature", "kindling", "brulee", "cito", "luz"), -->
+
+<!--     label = "Table of comparison" -->
+
+<!-- ) -->
+
+<!-- ``` -->
 
 ## References
 

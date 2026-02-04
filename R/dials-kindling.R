@@ -18,14 +18,14 @@
 #' @section Parameters:
 #'
 #' \describe{
-#'     \item{`n_hlayers`}{Number of hidden layers in the network.}
-#'     \item{`hidden_neurons`}{Number of units per hidden layer (applied to all layers).}
-#'     \item{`activation`}{Single activation function applied to all hidden layers.}
-#'     \item{`output_activation`}{Activation function for the output layer.}
-#'     \item{`optimizer`}{Optimizer algorithm.}
-#'     \item{`bias`}{Whether to include bias terms in layers.}
-#'     \item{`validation_split`}{Proportion of training data held out for validation.}
-#'     \item{`bidirectional`}{Whether RNN layers are bidirectional.}
+#'   \item{`n_hlayers`}{Number of hidden layers in the network.}
+#'   \item{`hidden_neurons`}{Number of units per hidden layer (applied to all layers).}
+#'   \item{`activation`}{Single activation function applied to all hidden layers.}
+#'   \item{`output_activation`}{Activation function for the output layer.}
+#'   \item{`optimizer`}{Optimizer algorithm.}
+#'   \item{`bias`}{Whether to include bias terms in layers.}
+#'   \item{`validation_split`}{Proportion of training data held out for validation.}
+#'   \item{`bidirectional`}{Whether RNN layers are bidirectional.}
 #' }
 #' 
 #' @return
@@ -64,7 +64,7 @@
 #' )
 #' }
 #'
-#' @name dials-kindling 
+#' @name dials-kindling
 #' @keywords internal
 NULL
 
@@ -77,7 +77,7 @@ NULL
 #'
 #' @rdname dials-kindling
 #' @export
-n_hlayers = function(range = c(1L, 5L), trans = NULL) {
+n_hlayers = function(range = c(1L, 2L), trans = NULL) {
     dials::new_quant_param(
         type = "integer",
         range = range,
@@ -92,19 +92,43 @@ n_hlayers = function(range = c(1L, 5L), trans = NULL) {
 #' Specifies the number of units per hidden layer.
 #'
 #' @param range A two-element integer vector with the default lower and upper bounds.
-#' @param trans An optional transformation; `NULL` for none.
+#' @param disc_values `NULL` (default) or an integer vector of specific possible disc_values 
+#'     (e.g., `c(32L, 64L, 128L, 256L)`). When provided, tuning will be restricted to 
+#'     these discrete values. The range is automatically derived from these values if not explicitly given.
+#'     The `trans` parameter would still be ignored by this parameter when supplied. 
+#' @param trans An optional transformation; `NULL` for none. 
 #'
 #' @rdname dials-kindling
 #' @export
-hidden_neurons = function(range = c(8L, 512L), trans = NULL) {
-    dials::new_quant_param(
-        type = "integer",
-        range = range,
-        inclusive = c(TRUE, TRUE),
-        trans = trans,
-        label = c(hidden_neurons = "Hidden Units per Layer"),
-        finalize  = NULL
-    )
+hidden_neurons = function(range = c(8L, 512L), disc_values = NULL, trans = NULL) {
+    param = if (!is.null(disc_values)) {
+        
+        if (any(disc_values <= 0L) || anyNA(disc_values)) {
+            rlang::abort("`disc_values` must be positive integers with no missing values.")
+        }
+        
+        dials::new_quant_param(
+            type = "integer",
+            # range = range,
+            values = disc_values, 
+            inclusive = c(TRUE, TRUE),
+            trans = NULL,
+            label = c(hidden_neurons = "Hidden Units per Layer"),
+            finalize = NULL
+        )
+        # attr(param, "discrete_values") = disc_values
+    } else {
+        dials::new_quant_param(
+            type = "integer",
+            range = range,
+            inclusive = c(TRUE, TRUE),
+            trans = trans,
+            label = c(hidden_neurons = "Hidden Units per Layer"),
+            finalize = NULL
+        )
+    }
+    
+    param
 }
 
 #' @section Activation Function (Hidden Layers):

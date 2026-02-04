@@ -7,8 +7,9 @@ knitr::opts_chunk$set(
 )
 
 ## ----eval = FALSE-------------------------------------------------------------
-# # Install from GitHub
+# # install.packages("pak")
 # pak::pak("joshuamarie/kindling")
+# ## devtools::install_github("joshuamarie/kindling")
 
 ## -----------------------------------------------------------------------------
 library(kindling)
@@ -27,7 +28,7 @@ library(kindling)
 #     Species ~ .,
 #     data = iris,
 #     hidden_neurons = c(10, 15, 7),
-#     activations = act_funs(relu, elu),
+#     activations = act_funs(relu, elu), # c("relu", "elu")
 #     loss = "cross_entropy",
 #     epochs = 100
 # )

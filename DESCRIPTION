@@ -2,27 +2,25 @@ Package: kindling
 Type: Package
 Title: Higher-Level Interface of 'torch' Package to Auto-Train Neural
         Networks
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
-    person(
-      "Joshua", "Marie",
-      email = "joshua.marie.k@gmail.com",
-      role = c("aut", "cre")
+    person("Joshua", "Marie", 
+           email = "joshua.marie.k@gmail.com", 
+           role = c("aut", "cre"))
     )
-  )
 Description: Provides a higher-level interface to the 'torch' package for defining,
-    training, and tuning neural networks. This package supports feedforward 
-    (multi-layer perceptron) and recurrent neural networks (RNN (Recurrent Neural Networks), 
-    LSTM (Long Short-Term Memory), GRU (Gated Recurrent Unit)), and also reduces 
-    boilerplate code while enabling seamless integration with 'torch'. The methods to train 
-    neural networks from this package also bridges to titanic ML frameworks in R namely
-    'tidymodels' ecosystem, enabling the 'parsnip' model specifications, workflows, recipes, 
+    training, and fine-tuning neural networks, including its depth, powered by code generation. 
+    This package currently supports few to several architectures, namely feedforward (multi-layer perceptron) 
+    and recurrent neural networks (Recurrent Neural Networks (RNN), Long Short-Term Memory (LSTM), Gated Recurrent Unit (GRU)), 
+    while also reduces boilerplate 'torch' code while enabling seamless integration with 'torch'. The model methods 
+    to train neural networks from this package also bridges to titanic ML frameworks in R, namely
+    'tidymodels' ecosystem, which enables the 'parsnip' model specifications, workflows, recipes, 
     and tuning tools. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports: purrr, torch, rlang, cli, glue, vctrs, parsnip (>= 1.0.0),
         tibble, tidyr, dplyr, stats, NeuralNetTools, vip, ggplot2,
-        tune, dials
+        tune, dials, hardhat
 Suggests: testthat (>= 3.0.0), magrittr, box, recipes, workflows,
         rsample, yardstick, mlbench, modeldata, knitr, rmarkdown,
         DiceDesign, lhs, sfd
@@ -34,8 +32,8 @@ URL: https://kindling.joshuamarie.com,
 BugReports: https://github.com/joshuamarie/kindling/issues
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2026-01-27 03:36:35 UTC; DESKTOP
+Packaged: 2026-02-02 05:35:39 UTC; DESKTOP
 Author: Joshua Marie [aut, cre]
 Maintainer: Joshua Marie <joshua.marie.k@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-01-31 18:40:02 UTC
+Date/Publication: 2026-02-04 16:00:08 UTC
