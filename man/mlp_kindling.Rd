@@ -17,11 +17,15 @@ mlp_kindling(
   mixture = NULL,
   learn_rate = NULL,
   optimizer = NULL,
+  validation_split = NULL,
   optimizer_args = NULL,
   loss = NULL,
-  validation_split = NULL,
+  architecture = NULL,
+  flatten_input = NULL,
+  early_stopping = NULL,
   device = NULL,
-  verbose = NULL
+  verbose = NULL,
+  cache_weights = NULL
 )
 }
 \arguments{
@@ -63,20 +67,32 @@ Only relevant when \code{penalty > 0}. Can be tuned.
 \item{optimizer}{A character string for the optimizer type ("adam", "sgd",
 "rmsprop"). Can be tuned.}
 
-\item{optimizer_args}{A named list of additional arguments passed to the optimizer.
-Cannot be tuned.}
-
-\item{loss}{A character string for the loss function ("mse", "mae",
-"cross_entropy", "bce"). Cannot be tuned.}
-
 \item{validation_split}{A number between 0 and 1 for the proportion of data
 used for validation. Can be tuned.}
 
-\item{device}{A character string for the device to use ("cpu", "cuda", "mps").
-If NULL, auto-detects available GPU. Cannot be tuned.}
+\item{optimizer_args}{A named list of additional arguments passed to the
+optimizer. Cannot be tuned — pass via \code{set_engine()}.}
 
-\item{verbose}{Logical for whether to print training progress. Default FALSE.
-Cannot be tuned.}
+\item{loss}{A character string for the loss function ("mse", "mae",
+"cross_entropy", "bce"). Cannot be tuned — pass via \code{set_engine()}.}
+
+\item{architecture}{An \code{\link[=nn_arch]{nn_arch()}} object for a custom architecture. Cannot
+be tuned — pass via \code{set_engine()}.}
+
+\item{flatten_input}{Logical or \code{NULL}. Controls input flattening. Cannot be
+tuned — pass via \code{set_engine()}.}
+
+\item{early_stopping}{An \code{\link[=early_stop]{early_stop()}} object or \code{NULL}. Cannot be tuned —
+pass via \code{set_engine()}.}
+
+\item{device}{A character string for the device ("cpu", "cuda", "mps").
+Cannot be tuned — pass via \code{set_engine()}.}
+
+\item{verbose}{Logical for whether to print training progress. Cannot be
+tuned — pass via \code{set_engine()}.}
+
+\item{cache_weights}{Logical. If \code{TRUE}, stores trained weight matrices in
+the returned object. Cannot be tuned — pass via \code{set_engine()}.}
 }
 \value{
 A model specification object with class \code{mlp_kindling}.
@@ -97,23 +113,9 @@ that can be used within tidymodels workflows. The model supports:
 \item Both regression and classification tasks
 }
 
-The \code{hidden_neurons} parameter accepts an integer vector where each element
-represents the number of neurons in that hidden layer. For example,
-\code{hidden_neurons = c(128, 64, 32)} creates a network with three hidden layers.
-
-The \code{device} parameter controls where computation occurs:
-\itemize{
-\item \code{NULL} (default): Auto-detect best available device (CUDA > MPS > CPU)
-\item \code{"cuda"}: Use NVIDIA GPU
-\item \code{"mps"}: Use Apple Silicon GPU
-\item \code{"cpu"}: Use CPU only
-}
-
-When tuning, you can use special tune tokens:
-\itemize{
-\item For \code{hidden_neurons}: use \code{tune("hidden_neurons")} with a custom range
-\item For \code{activation}: use \code{tune("activation")} with values like "relu", "tanh"
-}
+Parameters that cannot be tuned (\code{architecture}, \code{flatten_input},
+\code{early_stopping}, \code{device}, \code{verbose}, \code{cache_weights}, \code{optimizer_args},
+\code{loss}) must be set via \code{set_engine()}, not as arguments to \code{mlp_kindling()}.
 }
 \examples{
 \donttest{
@@ -124,6 +126,11 @@ if (torch::torch_is_installed()) {
         tune[tune],
         parsnip[fit]
     )
+
+    # library(recipes)
+    # library(workflows)
+    # library(parsnip)
+    # library(tune)
 
     # Model specs
     mlp_spec = mlp_kindling(

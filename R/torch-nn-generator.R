@@ -1,6 +1,6 @@
 #' Functions to generate `nn_module` (language) expression
 #'
-#' @rdname nn_gens
+#' @name nn_gens
 #'
 #' @section Feed-Forward Neural Network Module Generator:
 #' The `ffnn_generator()` function generates a feed-forward neural network (FFNN) module expression
@@ -104,6 +104,10 @@ ffnn_generator = function(nn_name = "DeepFFN",
                           output_activation = NULL,
                           bias = TRUE) {
 
+    if (missing(hd_neurons) || is.null(hd_neurons) || length(hd_neurons) == 0L) {
+        hd_neurons = integer(0) 
+    }
+    
     nodes = c(no_x, hd_neurons, no_y)
     n_layers = length(nodes) - 1L
     n_hidden = length(hd_neurons)
@@ -115,6 +119,9 @@ ffnn_generator = function(nn_name = "DeepFFN",
         ), class = "nn_module_error")
     }
 
+    act_specs = eval_act_funs({{ activations }}, {{ output_activation }})
+    activations = act_specs$activations
+    output_activation = act_specs$output_activation
     activation_spec = parse_activation_spec(activations, n_hidden)
     activation_calls = process_activations(activation_spec, prefix = "nnf_")
 
@@ -321,11 +328,18 @@ rnn_generator = function(nn_name = "DeepRNN",
                          bidirectional = TRUE,
                          dropout = 0,
                          ...) {
+    
+    if (missing(hd_neurons) || is.null(hd_neurons) || length(hd_neurons) == 0L) {
+        hd_neurons = integer(0) 
+    }
 
     check_rnn_type(rnn_type, hd_neurons)
 
     n_rnn_layers = length(hd_neurons)
 
+    act_specs = eval_act_funs({{ activations }}, {{ output_activation }})
+    activations = act_specs$activations
+    output_activation = act_specs$output_activation
     activation_spec = parse_activation_spec(activations, n_rnn_layers)
     activation_calls = process_activations(activation_spec, prefix = "nnf_")
 

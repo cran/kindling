@@ -8,9 +8,11 @@
 [![CRAN
 status](https://www.r-pkg.org/badges/version/kindling)](https://CRAN.R-project.org/package=kindling)
 [![R-CMD-check](https://github.com/joshuamarie/kindling/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/joshuamarie/kindling/actions/workflows/R-CMD-check.yaml)
+<!-- [![CRAN Downloads](https://cranlogs.r-pkg.org/badges/kindling)](https://CRAN.R-project.org/package=kindling) -->
+<!-- [![CRAN Downloads Total](https://cranlogs.r-pkg.org/badges/grand-total/kindling?color=brightgreen)](https://CRAN.R-project.org/package=kindling) -->
+[![Codecov test
+coverage](https://codecov.io/gh/joshuamarie/kindling/graph/badge.svg)](https://app.codecov.io/gh/joshuamarie/kindling)
 <!-- badges: end -->
-
-<!-- > **Note**: This package is under active development. The API may change in future versions. -->
 
 ## Package overview
 
@@ -18,9 +20,9 @@ Title: ***Higher-Level Interface of ‘torch’ Package to Auto-Train Neural
 Networks***
 
 Whether you’re generating neural network architectures expressions or
-fitting/training actual models, `{kindling}` minimizes boilerplate code
-while preserving `{torch}`. Since this package uses `{torch}` as its
-backend, GPU/TPU devices also supported.
+direct fitting/training actual models, `{kindling}` minimizes
+boilerplate code while preserving `{torch}`. And since this package uses
+`{torch}` as its backend, GPU/TPU devices are supported.
 
 `{kindling}` also bridges the gap between `{torch}` and `{tidymodels}`.
 It works seamlessly with `{parsnip}`, `{recipes}`, and `{workflows}` to
@@ -33,25 +35,21 @@ deep learning models within the familiar `{tidymodels}` ecosystem.
 <!-- -   Seamless integration with `parsnip` through `set_engine("kindling")` -->
 
 - Code generation of `{torch}` expression
-- Multiple architectures available: feedforward networks (MLP/DNN/FFNN)
-  and recurrent variants (RNN, LSTM, GRU)
+
+- Multiple architectures available
+
+  - Base models interface: feedforward networks (MLP/DNN/FFNN) and
+    recurrent variants (RNN, LSTM, GRU)
+  - Generalized neural network trainer that has the same topology as
+    MLPs
+
 - Native support for titanic ML frameworks (currently supports
   `{tidymodels}`, `{mlr3}` for later) workflows and pipelines
+
 - Fine-grained control over network depth, layer sizes, and activation
   functions
+
 - GPU acceleration supports via `{torch}` tensors
-  <!-- -   Dramatically less boilerplate than raw `{torch}` implementations -->
-
-### Supported Architectures (As of now)
-
-- **Feedforward Networks (DNN/FFNN)**: Classic multi-layer perceptrons
-  for tabular data and general supervised learning
-- **Recurrent Neural Networks (RNN)**: Basic recurrent architecture for
-  sequential patterns
-- **Long Short-Term Memory (LSTM)**: Sophisticated recurrent networks
-  with gating mechanisms for long-range dependencies
-- **Gated Recurrent Units (GRU)**: Streamlined alternative to LSTM with
-  fewer parameters
 
 ## Installation
 
@@ -79,11 +77,6 @@ abstraction level suits your task.
 
 ``` r
 library(kindling)
-#> 
-#> Attaching package: 'kindling'
-#> The following object is masked from 'package:base':
-#> 
-#>     args
 ```
 
 Before starting, you need to install LibTorch, the backend of PyTorch
@@ -145,7 +138,7 @@ model = ffnn(
     Species ~ .,
     data = iris,
     hidden_neurons = c(10, 15, 7),
-    activations = act_funs(relu, softshrink = args(lambd = 0.5), elu), 
+    activations = act_funs(relu, softshrink[lambd = 0.5], elu), 
     loss = "cross_entropy",
     epochs = 100
 )
@@ -178,6 +171,13 @@ model
                      Output Activation :   No act function applied
                    -------------------------------------------------
 
+> For parametric activation functions like softshrink, which contains
+> `"lambd"` ($\lambda$) as its parameter (the default is 1), use indexed
+> syntax (available on v0.3.x+) e.g. `softshrink[lambd = 0.5]` or
+> `softshrink[0.5]`, or a string literal expression
+> e.g. `"softshrink(lambd = 0.5)"`, to transmute the parameter value.
+> See `?kindling::act_funs()` for more details.
+
 Evaluate the prediction through `predict()`. The `predict()` method is
 extended for fitted models through its `newdata` argument.
 
@@ -192,8 +192,8 @@ Two kinds of `predict()` usage:
     #>             predicted
     #> actual       setosa versicolor virginica
     #>   setosa         50          0         0
-    #>   versicolor      0         46         4
-    #>   virginica       0          2        48
+    #>   versicolor      0         47         3
+    #>   virginica       0          1        49
     ```
 
 2.  **With `newdata`** simply pass the new data frame as the new
@@ -208,7 +208,7 @@ Two kinds of `predict()` usage:
     #> actual       setosa versicolor virginica
     #>   setosa         10          0         0
     #>   versicolor      0         10         0
-    #>   virginica       0          1         9
+    #>   virginica       0          0        10
     ```
 
 ### Level 3: Conventional tidymodels Integration
@@ -234,7 +234,7 @@ ionosphere_data = Ionosphere[, -2]
 mlp_kindling(
     mode = "classification",
     hidden_neurons = c(128, 64),
-    activations = act_funs(relu, softshrink = args(lambd = 0.5)),
+    activations = act_funs(relu, softshrink[lambd = 0.5]),
     epochs = 100
 ) |>
     fit(Class ~ ., data = ionosphere_data) |>
@@ -265,8 +265,6 @@ rnn_kindling(
 ```
 
 ## Hyperparameter Tuning & Resampling
-
-<!-- > This functionality is available, but still not fully optimized. -->
 
 The package has integration with `{tidymodels}`, so it supports
 hyperparameter tuning via `{tune}` with searchable parameters.
@@ -368,21 +366,21 @@ networks. Two primary algorithms are available:
     ``` r
     garson(model, bar_plot = FALSE)
     #>        x_names y_names  rel_imp
-    #> 1  Sepal.Width       y 29.04598
-    #> 2  Petal.Width       y 27.50590
-    #> 3 Sepal.Length       y 24.20982
-    #> 4 Petal.Length       y 19.23830
+    #> 1  Sepal.Width       y 29.60036
+    #> 2 Petal.Length       y 26.92774
+    #> 3  Petal.Width       y 26.28239
+    #> 4 Sepal.Length       y 17.18951
     ```
 
 2.  Olden’s Algorithm
 
     ``` r
     olden(model, bar_plot = FALSE)
-    #>        x_names y_names     rel_imp
-    #> 1  Sepal.Width       y  0.56231712
-    #> 2  Petal.Width       y -0.51113650
-    #> 3 Petal.Length       y -0.29761552
-    #> 4 Sepal.Length       y -0.06857191
+    #>        x_names y_names      rel_imp
+    #> 1  Petal.Width       y  0.037665642
+    #> 2 Sepal.Length       y  0.035827098
+    #> 3  Sepal.Width       y -0.020472638
+    #> 4 Petal.Length       y  0.009678024
     ```
 
 ### Integration with {vip}

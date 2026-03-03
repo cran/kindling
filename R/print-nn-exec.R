@@ -3,7 +3,9 @@
 concat = function(x) {
     if (is.null(x)) return("No act function applied")
     
-    if (inherits(x, "parameterized_activation")) {
+    if (inherits(x, "custom_activation")) {
+        attr(x, "act_name") 
+    } else if (inherits(x, "parameterized_activation")) {
         fname = attr(x, "act_name")
         params = paste(
             names(x),
@@ -42,11 +44,17 @@ concat = function(x) {
 #'
 #' @rdname ordinal_gen
 ordinal_gen = function(x) {
-    if (is.numeric(x) & any(x < 1))
+    if (is.numeric(x) && any(x < 1))
         warning("Values below 1 found.\nMay yield incorrect results")
+    
     x = as.character(x)
-    regs = c(th = "^1[1:2]$|[0456789]$", st = "(?<!^1)1$", nd = "(?<!^1)2$",
-             rd = "(?<!^1)3$")
+    
+    regs = c(
+        th = "^1[1-9]$|[0456789]$",
+        st = "(?<!^1)1$",
+        nd = "(?<!^1)2$",
+        rd = "(?<!^1)3$"
+    )
     
     for (i in seq_along(regs)) {
         locs = grepl(regs[i], x, perl = TRUE)
@@ -106,7 +114,12 @@ print.ffnn_fit = function(x, ...) {
     )
     
     inner_acts = if (is.list(x$activations)) {
-        vapply(x$activations, concat, character(1))
+        acts = vapply(x$activations, concat, character(1))
+        if (length(acts) == 1L && length(x$hidden_neurons) > 1L) {
+            rep(acts, length(x$hidden_neurons))
+        } else {
+            acts
+        }
     } else if (!is.null(x$activations)) {
         if (length(x$activations) == 1) {
             rep(as.character(x$activations), length(x$hidden_neurons))
@@ -209,7 +222,12 @@ print.rnn_fit = function(x, ...) {
     )
     
     inner_acts = if (is.list(x$activations)) {
-        vapply(x$activations, concat, character(1))
+        acts = vapply(x$activations, concat, character(1))
+        if (length(acts) == 1L && length(x$hidden_neurons) > 1L) {
+            rep(acts, length(x$hidden_neurons))
+        } else {
+            acts
+        }
     } else if (!is.null(x$activations)) {
         if (length(x$activations) == 1) {
             rep(as.character(x$activations), length(x$hidden_neurons))
@@ -217,8 +235,6 @@ print.rnn_fit = function(x, ...) {
             as.character(x$activations)
         }
     } else {
-        # When no activations specified 
-        # Replicate "None" for each hidden layer
         rep("None", length(x$hidden_neurons))
     }
     outer_acts = concat(x$output_activation)

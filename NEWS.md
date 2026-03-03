@@ -1,5 +1,65 @@
 # kindling (development version)
 
+# kindling 0.3.0
+
+## New Experimental functions
+
+-   Generalized `nn_module()` expression generator to generate `torch::nn_module()` expression for the same sequential NN architectures
+
+    -  This is how you use to generate `nn_module()` for 1D-CNN (Convolutional Neural Networks) with 3 hidden layers:
+    
+    ``` r
+    nn_module_generator(
+        nn_name = "CNN1DClassifier",
+        nn_layer = "nn_conv1d",
+        layer_arg_fn = ~ if (.is_output) {
+            list(.in, .out)
+        } else {
+            list(
+                in_channels = .in,
+                out_channels = .out,
+                kernel_size = 3L,
+                stride = 1L,
+                padding = 1L 
+            )
+        },
+        after_output_transform = ~ .$mean(dim = 2),
+        last_layer_args = list(kernel_size = 1, stride = 2),
+        hd_neurons = c(16, 32, 64),
+        no_x = 1,
+        no_y = 10,
+        activations = "relu"
+    )
+    ```
+
+-   `train_nn()` to execute `nn_module_generator()`
+
+    -   `nn_arch()` must be supplied to inherit extra arguments from `nn_module_generator()` function. 
+    -   Allows early stopping if `early_stopping` is supplied with `early_stop()`.
+    -   Supported with several data types: `matrix`, `data.frame`, `dataset` (`{torch}` dataset), and a formula interface. 
+    -   `train_nnsnip()` is now provided to make `train_nn()` bridges with `{tidymodels}`
+
+-   You can supply customized activation function under `act_funs()` with `new_act_fn()`. 
+
+    -   Activation functions that especially don't exist on `torch::nnf_*()`. 
+    -   Supply the argument with a function
+    -   The function supplied into `new_act_fn()` must return a `torch` tensor object. 
+    -   Example: `act_funs(new_act_fn(torch::torch_tanh))` or `act_funs(new_act_fn(\(x) torch::torch_tanh(x)))`
+    -   Use `.name` as a displayed name of the custom activation function. 
+
+### Superset
+
+-  `act_funs()` as a DSL function now supports index-style parameter specification for parametric activation functions
+
+    -   Activation functions can now be modified using `[` syntax (e.g. `softplus[beta = 0.2]`)
+    -   The current `args()` (e.g. `softplus = args(beta = 0.2)`) is now superseded by that. 
+
+### Bug Fixes
+
+-  No suffix generated for `13` by `ordinal_gen()`. Now fixed.  
+
+-  `hd_neurons` for both `ffnn_generator()` and `rnn_generator()` accepts empty arguments, which implies there's no hidden layers applied. 
+
 # kindling 0.2.0
 
 ## New features

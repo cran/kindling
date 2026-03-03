@@ -148,5 +148,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Joshua Marie \email{joshua.marie.k@gmail.com}
 
+Authors:
+\itemize{
+  \item Antoine Soetewey \email{ant.soetewey@gmail.com} (\href{https://orcid.org/0000-0001-8159-0804}{ORCID})
+}
+
 }
 \keyword{internal}
