@@ -1,5 +1,21 @@
 # kindling (development version)
 
+## Ongoing features
+
+-  More visualization supports
+
+    -  NN architecture plot
+
+# kindling 0.3.1
+
+## New features
+
+-   `autoplot()` and `plot()` methods for `nn_fit` objects now visualize the training loss history, with optional validation loss and an early-stopping marker when early stopping fires.
+
+-   `autoplot_diagnostics()` and `plot_diagnostics()` produce prediction diagnostic plots for `nn_fit` objects: residuals vs fitted and actual vs fitted panels for regression, one panel per output for multi-output regression, and a confusion matrix heatmap for classification.
+    
+-   `{vip}` is removed from `{kindling}`'s package dependencies, and moved to "Suggests" instead to avoid dependency redundancy. 
+
 # kindling 0.3.0
 
 ## New Experimental functions
@@ -37,7 +53,7 @@
     -   `nn_arch()` must be supplied to inherit extra arguments from `nn_module_generator()` function. 
     -   Allows early stopping if `early_stopping` is supplied with `early_stop()`.
     -   Supported with several data types: `matrix`, `data.frame`, `dataset` (`{torch}` dataset), and a formula interface. 
-    -   `train_nnsnip()` is now provided to make `train_nn()` bridges with `{tidymodels}`
+    -   `train_nnsnip()` is now provided to bridge `train_nn()` with `{tidymodels}`
 
 -   You can supply customized activation function under `act_funs()` with `new_act_fn()`. 
 
@@ -94,7 +110,7 @@
 ## Documentation
 
 -   Add a vignette to showcase the comparison with other similar packages
--   The package description got few clarifications
+-   The package description has been clarified
 -   Vignette to showcase the comparison with other similar packages
 -   `hidden_neurons` parameter now supports discrete values specification
 
