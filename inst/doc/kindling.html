@@ -356,74 +356,269 @@ guide you through the basic usage.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># install.packages(&quot;pak&quot;)</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">&quot;joshuamarie/kindling&quot;</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="do">## devtools::install_github(&quot;joshuamarie/kindling&quot;) </span></span></code></pre></div>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(kindling)</span></code></pre></div>
 </div>
 <div id="before-using-kindling" class="section level2">
 <h2>Before using {kindling}</h2>
-<p>Before starting, you need to install LibTorch, the backend of PyTorch
-which also the backend of <code>{torch}</code> R package:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(kindling)</span></code></pre></div>
+<p>Before starting, you need to install LibTorch first, the backend of
+PyTorch, which is also the backend of <code>{torch}</code> R
+package:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>torch<span class="sc">::</span><span class="fu">install_torch</span>()</span></code></pre></div>
 </div>
-<div id="four-levels-of-interaction" class="section level2">
-<h2>Four Levels of Interaction</h2>
-<p><code>{kindling}</code> offers flexibility through four levels of
-abstraction:</p>
+<div id="main-features" class="section level2">
+<h2>Main Features</h2>
+<p>Current <code>{kindling}</code> supports the following:</p>
+<ul>
+<li><p>Code generation of <code>{torch}</code> expression</p></li>
+<li><p>Multiple architectures available</p>
+<ul>
+<li>Base models interface: feedforward networks (MLP/DNN/FFNN) and
+recurrent variants (RNN, LSTM, GRU)</li>
+<li>Generalized neural network trainer that has the same topology as
+MLPs</li>
+</ul></li>
+<li><p>Native support for R ML workflows and pipelines (currently
+<code>{tidymodels}</code>; <code>{mlr3}</code> planned)</p></li>
+<li><p>Fine-grained control over network depth, layer sizes, and
+activation functions</p></li>
+<li><p>GPU acceleration support via <code>{torch}</code>
+tensors</p></li>
+</ul>
+<div id="what-it-doesnt-support" class="section level3">
+<h3>What it doesn’t support</h3>
+<p>As of <code>{kindling}</code> &gt;0.3.0, it supports most of NN
+architectures thanks to its versatility, as long as they follow typical
+MLP’s topology. This package, however, does not support the
+following:</p>
 <ol style="list-style-type: decimal">
-<li><strong>Code Generation</strong> - Generate raw
-<code>torch::nn_module</code> code</li>
-<li><strong>Direct Training</strong> - Train models with simple function
-calls</li>
-<li><strong>tidymodels Integration</strong> - Use with
-<code>parsnip</code>, <code>recipes</code>, and
-<code>workflows</code></li>
-<li><strong>Hyperparameter Tuning</strong> - Optimize models with
-<code>tune</code> and <code>dials</code></li>
+<li>Residual Networks (ResNet)</li>
+<li>Automatic Integration (AutoInt)</li>
+<li>Self-Attention and Inter-sample Attention Transformer (Saint)</li>
 </ol>
+<p>To use all of these, you might want to take an interest towards
+<code>{brulee}</code> package instead. The said NN architectures above
+are available on version 1.0.0 (and later) release.</p>
 </div>
-<div id="level-1-code-generation" class="section level2">
-<h2>Level 1: Code Generation</h2>
-<p>Generate PyTorch-style module code:</p>
+</div>
+<div id="usage-three-levels-of-interaction" class="section level2">
+<h2>Usage: Three Levels of Interaction</h2>
+<p><code>{kindling}</code> is powered by R’s metaprogramming
+capabilities through <em>code generation</em>. Generated
+<code>torch::nn_module()</code> expressions power the training
+functions, which in turn serve as engines for <code>{tidymodels}</code>
+integration. This architecture gives you flexibility to work at whatever
+abstraction level suits your task.</p>
+<div id="level-1-code-generation-for-torchnn_module" class="section level3">
+<h3>Level 1: Code Generation for <code>torch::nn_module</code></h3>
+<p>At the lowest level, you can generate raw
+<code>torch::nn_module</code> code for maximum customization. Functions
+ending with <code>_generator</code> return unevaluated expressions you
+can inspect, modify, or execute.</p>
+<p>Here’s how to generate a feedforward network specification:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">ffnn_generator</span>(</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>    <span class="at">nn_name =</span> <span class="st">&quot;MyNetwork&quot;</span>,</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="at">hd_neurons =</span> <span class="fu">c</span>(<span class="dv">64</span>, <span class="dv">32</span>),</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>    <span class="at">nn_name =</span> <span class="st">&quot;MyFFNN&quot;</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="at">hd_neurons =</span> <span class="fu">c</span>(<span class="dv">64</span>, <span class="dv">32</span>, <span class="dv">16</span>),</span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    <span class="at">no_x =</span> <span class="dv">10</span>,</span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="at">no_y =</span> <span class="dv">1</span>,</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="at">activations =</span> <span class="st">&#39;relu&#39;</span></span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>)</span></code></pre></div>
+<p>This creates a three-hidden-layer network (64 - 32 - 16 neurons) that
+takes 10 inputs and produces 1 output. Each hidden layer uses ReLU
+activation, while the output layer remains “untransformed”.</p>
 </div>
-<div id="level-2-direct-training" class="section level2">
-<h2>Level 2: Direct Training</h2>
-<p>Train a model with one function call:</p>
+<div id="level-2-direct-training-interface" class="section level3">
+<h3>Level 2: Direct Training Interface</h3>
+<p>Skip the code generation and train models directly with your data.
+This approach handles all the <code>{torch}</code> boilerplate when
+training the models internally.</p>
+<p>Let’s classify iris species:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>model <span class="ot">=</span> <span class="fu">ffnn</span>(</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>    Species <span class="sc">~</span> .,</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="at">data =</span> iris,</span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">7</span>),</span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, elu), <span class="co"># c(&quot;relu&quot;, &quot;elu&quot;)</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, softshrink[<span class="at">lambd =</span> <span class="fl">0.5</span>], elu), </span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="at">loss =</span> <span class="st">&quot;cross_entropy&quot;</span>,</span>
 <span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">100</span></span>
 <span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>)</span>
 <span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>predictions <span class="ot">=</span> <span class="fu">predict</span>(model, <span class="at">newdata =</span> iris)</span></code></pre></div>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>model</span></code></pre></div>
+<blockquote>
+<p>For parametric activation functions like softshrink, which contains
+<code>&quot;lambd&quot;</code> (<span class="math inline">\(\lambda\)</span>) as
+its parameter (the default is 1), use indexed syntax (available on
+v0.3.x+) e.g. <code>softshrink[lambd = 0.5]</code> or
+<code>softshrink[0.5]</code>, or a string literal expression
+e.g. <code>&quot;softshrink(lambd = 0.5)&quot;</code>, to transmute the parameter
+value. See <code>?kindling::act_funs()</code> for more details.</p>
+</blockquote>
+<p>Evaluate the prediction through <code>predict()</code>. The
+<code>predict()</code> method is extended for fitted models through its
+<code>newdata</code> argument.</p>
+<p>Two kinds of <code>predict()</code> usage:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Without <code>newdata</code></strong> predictions default
+to the training data.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">predict</span>(model) <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>    (\(x) <span class="fu">table</span>(<span class="at">actual =</span> iris<span class="sc">$</span>Species, <span class="at">predicted =</span> x))()</span></code></pre></div></li>
+<li><p><strong>With <code>newdata</code></strong> simply pass the new
+data frame as the new reference.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>sample_iris <span class="ot">=</span> dplyr<span class="sc">::</span><span class="fu">slice_sample</span>(iris, <span class="at">n =</span> <span class="dv">10</span>, <span class="at">by =</span> Species)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">predict</span>(model, <span class="at">newdata =</span> sample_iris) <span class="sc">|&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>    (\(x) <span class="fu">table</span>(<span class="at">actual =</span> sample_iris<span class="sc">$</span>Species, <span class="at">predicted =</span> x))()</span></code></pre></div></li>
+</ol>
 </div>
-<div id="level-3-tidymodels-integration" class="section level2">
-<h2>Level 3: tidymodels Integration</h2>
-<p>Work with neural networks like any other <code>parsnip</code>
-model:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>box<span class="sc">::</span><span class="fu">use</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>    parsnip[fit, augment],</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    yardstick[metrics]</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>)</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>nn_spec <span class="ot">=</span> <span class="fu">mlp_kindling</span>(</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">7</span>),</span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, <span class="at">softshrink =</span> <span class="fu">args</span>(<span class="at">lambd =</span> <span class="fl">0.5</span>)),</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">100</span></span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>)</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>nn_fit <span class="ot">=</span> <span class="fu">fit</span>(nn_spec, Species <span class="sc">~</span> ., <span class="at">data =</span> iris)</span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="fu">augment</span>(nn_fit, <span class="at">new_data =</span> iris) <span class="sc">|&gt;</span> </span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>    <span class="fu">metrics</span>(<span class="at">truth =</span> Species, <span class="at">estimate =</span> .pred_class)</span></code></pre></div>
+<div id="level-3-conventional-tidymodels-integration" class="section level3">
+<h3>Level 3: Conventional tidymodels Integration</h3>
+<p>Work with neural networks just like any other <code>{parsnip}</code>
+model. This unlocks the entire <code>{tidymodels}</code> toolkit for
+preprocessing, cross-validation, and model evaluation.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># library(kindling)</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># library(parsnip)</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co"># library(yardstick)</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>box<span class="sc">::</span><span class="fu">use</span>(</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>    kindling[mlp_kindling, rnn_kindling, act_funs, args],</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>    parsnip[fit, augment],</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>    yardstick[metrics]</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="fu">data</span>(Ionosphere, <span class="at">package =</span> <span class="st">&quot;mlbench&quot;</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>ionosphere_data <span class="ot">=</span> Ionosphere[, <span class="sc">-</span><span class="dv">2</span>]</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co"># Train a feedforward network with parsnip</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="fu">mlp_kindling</span>(</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">c</span>(<span class="dv">128</span>, <span class="dv">64</span>),</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, softshrink[<span class="at">lambd =</span> <span class="fl">0.5</span>]),</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">100</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>    <span class="fu">fit</span>(Class <span class="sc">~</span> ., <span class="at">data =</span> ionosphere_data) <span class="sc">|&gt;</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>    <span class="fu">augment</span>(<span class="at">new_data =</span> ionosphere_data) <span class="sc">|&gt;</span></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>    <span class="fu">metrics</span>(<span class="at">truth =</span> Class, <span class="at">estimate =</span> .pred_class)</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="co"># Or try a recurrent architecture (demonstrative example with tabular data)</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="fu">rnn_kindling</span>(</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>,</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">c</span>(<span class="dv">128</span>, <span class="dv">64</span>),</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">act_funs</span>(relu, elu),</span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">100</span>,</span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>    <span class="at">rnn_type =</span> <span class="st">&quot;gru&quot;</span></span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>    <span class="fu">fit</span>(Class <span class="sc">~</span> ., <span class="at">data =</span> ionosphere_data) <span class="sc">|&gt;</span></span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>    <span class="fu">augment</span>(<span class="at">new_data =</span> ionosphere_data) <span class="sc">|&gt;</span></span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>    <span class="fu">metrics</span>(<span class="at">truth =</span> Class, <span class="at">estimate =</span> .pred_class)</span></code></pre></div>
+</div>
+</div>
+<div id="hyperparameter-tuning-resampling" class="section level2">
+<h2>Hyperparameter Tuning &amp; Resampling</h2>
+<p>The package has integration with <code>{tidymodels}</code>, so it
+supports hyperparameter tuning via <code>{tune}</code> with searchable
+parameters.</p>
+<p>The current searchable parameters under <code>{kindling}</code>:</p>
+<ul>
+<li>Layer widths (neurons per layer)</li>
+<li>Network depth (number of hidden layers)</li>
+<li>Activation function combinations</li>
+<li>Output activation</li>
+<li>Optimizer (Type of optimization algorithm)</li>
+<li>Bias (choose between the presence and the absence of the bias
+term)</li>
+<li>Validation Split Proportion</li>
+<li>Bidirectional (boolean; only for RNN)</li>
+</ul>
+<p>The searchable parameters outside from <code>{kindling}</code>,
+i.e. under <code>{dials}</code> package such as
+<code>learn_rate()</code> also supported.</p>
+<p>Here’s an example:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># library(tidymodels)</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>box<span class="sc">::</span><span class="fu">use</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>    kindling[</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>        mlp_kindling, hidden_neurons, activations, output_activation, grid_depth</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    ],</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>    parsnip[fit, augment],</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>    recipes[recipe],</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>    workflows[workflow, add_recipe, add_model],</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    rsample[vfold_cv],</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>    tune[tune_grid, tune, select_best, finalize_workflow],</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>    dials[grid_random],</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>    yardstick[accuracy, roc_auc, metric_set, metrics]</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>)</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>mlp_tune_spec <span class="ot">=</span> <span class="fu">mlp_kindling</span>(</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    <span class="at">hidden_neurons =</span> <span class="fu">tune</span>(),</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>    <span class="at">activations =</span> <span class="fu">tune</span>(),</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>    <span class="at">output_activation =</span> <span class="fu">tune</span>()</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>)</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>iris_folds <span class="ot">=</span> <span class="fu">vfold_cv</span>(iris, <span class="at">v =</span> <span class="dv">3</span>)</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>nn_wf <span class="ot">=</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>    <span class="fu">add_recipe</span>(<span class="fu">recipe</span>(Species <span class="sc">~</span> ., <span class="at">data =</span> iris)) <span class="sc">|&gt;</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>    <span class="fu">add_model</span>(mlp_tune_spec)</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>nn_grid_depth <span class="ot">=</span> <span class="fu">grid_depth</span>(</span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>    <span class="fu">hidden_neurons</span>(<span class="fu">c</span>(<span class="dv">32</span><span class="dt">L</span>, <span class="dv">128</span><span class="dt">L</span>)),</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>    <span class="fu">activations</span>(<span class="fu">c</span>(<span class="st">&quot;relu&quot;</span>, <span class="st">&quot;elu&quot;</span>)),</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>    <span class="fu">output_activation</span>(<span class="fu">c</span>(<span class="st">&quot;sigmoid&quot;</span>, <span class="st">&quot;linear&quot;</span>)),</span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>    <span class="at">n_hlayer =</span> <span class="dv">2</span>,</span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">10</span>,</span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">&quot;latin_hypercube&quot;</span></span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a>)</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a></span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a><span class="co"># This is supported but limited to 1 hidden layer only</span></span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a><span class="do">## nn_grid = grid_random(</span></span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a><span class="do">##     hidden_neurons(c(32L, 128L)),</span></span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a><span class="do">##     activations(c(&quot;relu&quot;, &quot;elu&quot;)),</span></span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a><span class="do">##     output_activation(c(&quot;sigmoid&quot;, &quot;linear&quot;)),</span></span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a><span class="do">##     size = 10</span></span>
+<span id="cb10-42"><a href="#cb10-42" tabindex="-1"></a><span class="do">## )</span></span>
+<span id="cb10-43"><a href="#cb10-43" tabindex="-1"></a></span>
+<span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a>nn_tunes <span class="ot">=</span> tune<span class="sc">::</span><span class="fu">tune_grid</span>(</span>
+<span id="cb10-45"><a href="#cb10-45" tabindex="-1"></a>    nn_wf,</span>
+<span id="cb10-46"><a href="#cb10-46" tabindex="-1"></a>    iris_folds,</span>
+<span id="cb10-47"><a href="#cb10-47" tabindex="-1"></a>    <span class="at">grid =</span> nn_grid_depth</span>
+<span id="cb10-48"><a href="#cb10-48" tabindex="-1"></a>)</span>
+<span id="cb10-49"><a href="#cb10-49" tabindex="-1"></a></span>
+<span id="cb10-50"><a href="#cb10-50" tabindex="-1"></a>best_nn <span class="ot">=</span> <span class="fu">select_best</span>(nn_tunes)</span>
+<span id="cb10-51"><a href="#cb10-51" tabindex="-1"></a>best_nn</span>
+<span id="cb10-52"><a href="#cb10-52" tabindex="-1"></a>final_nn <span class="ot">=</span> <span class="fu">finalize_workflow</span>(nn_wf, best_nn)</span>
+<span id="cb10-53"><a href="#cb10-53" tabindex="-1"></a>final_nn_model <span class="ot">=</span> <span class="fu">fit</span>(final_nn, <span class="at">data =</span> iris)</span>
+<span id="cb10-54"><a href="#cb10-54" tabindex="-1"></a>final_nn_model</span>
+<span id="cb10-55"><a href="#cb10-55" tabindex="-1"></a></span>
+<span id="cb10-56"><a href="#cb10-56" tabindex="-1"></a>final_nn_model <span class="sc">|&gt;</span></span>
+<span id="cb10-57"><a href="#cb10-57" tabindex="-1"></a>    <span class="fu">augment</span>(<span class="at">new_data =</span> iris) <span class="sc">|&gt;</span></span>
+<span id="cb10-58"><a href="#cb10-58" tabindex="-1"></a>    <span class="fu">metrics</span>(<span class="at">truth =</span> Species, <span class="at">estimate =</span> .pred_class)</span></code></pre></div>
+<p>Resampling strategies from <code>{rsample}</code> will enable robust
+cross-validation workflows, orchestrated through the <code>{tune}</code>
+and <code>{dials}</code> APIs.</p>
+</div>
+<div id="variable-importance" class="section level2">
+<h2>Variable Importance</h2>
+<p><code>{kindling}</code> integrates with established variable
+importance methods from <code>{NeuralNetTools}</code> and
+<code>{vip}</code> to interpret trained neural networks. Two primary
+algorithms are available:</p>
+<ol style="list-style-type: decimal">
+<li><p>Garson’s Algorithm</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">garson</span>(model, <span class="at">bar_plot =</span> <span class="cn">FALSE</span>)</span></code></pre></div></li>
+<li><p>Olden’s Algorithm</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">olden</span>(model, <span class="at">bar_plot =</span> <span class="cn">FALSE</span>)</span></code></pre></div></li>
+</ol>
+<div id="integration-with-vip" class="section level3">
+<h3>Integration with {vip}</h3>
+<p>For users working within the <code>{tidymodels}</code> ecosystem,
+<code>{kindling}</code> models work seamlessly with the
+<code>{vip}</code> package:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>box<span class="sc">::</span><span class="fu">use</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>    vip[vi, vip]</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="fu">vi</span>(model) <span class="sc">|&gt;</span> </span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>    <span class="fu">vip</span>()</span></code></pre></div>
+<p><em>Note: Weight caching increases memory usage proportional to
+network size. Only enable it when you plan to compute variable
+importance multiple times on the same model.</em></p>
+</div>
 </div>
 <div id="learn-more" class="section level2">
 <h2>Learn More</h2>
@@ -431,9 +626,6 @@ model:</p>
 <li>Visit the package website: <a href="https://kindling.joshuamarie.com" class="uri">https://kindling.joshuamarie.com</a></li>
 <li>Report issues: <a href="https://github.com/joshuamarie/kindling/issues" class="uri">https://github.com/joshuamarie/kindling/issues</a></li>
 </ul>
-<!-- - Read the [README](../index.html) for comprehensive examples -->
-<!-- - Browse the [function reference](../reference/index.html) -->
-<!-- - Visit the [blog](https://joshuamarie.com) for tutorials -->
 </div>
 
 

@@ -16,6 +16,11 @@
 #' @return A `vctrs` vector with class "activation_spec" containing validated
 #' activation specifications.
 #'
+#' @examples
+#' act_funs(relu, sigmoid)
+#' act_funs(relu, softshrink[lambd = 0.5], elu)
+#' act_funs(softmax = args(dim = 2L))
+#'
 #' @importFrom rlang enquos quo_get_expr is_call call_name as_string eval_tidy
 #' @importFrom cli cli_abort
 #' @importFrom vctrs new_vctr
@@ -109,6 +114,9 @@ act_funs = function(...) {
 #'
 #' @param ... Named arguments for the activation function.
 #' @return A list with class "activation_args" containing the parameters.
+#'
+#' @examples
+#' act_funs(softmax = args(dim = 2L))
 #'
 #' @importFrom cli cli_abort
 #'
@@ -207,7 +215,14 @@ validate_activation = function(act_name, prefix = "nnf_") {
             i = "Install it with: {.code install.packages('torch')}"
         ), class = "torch_missing_error")
     }
-    
+
+    if (identical(act_name, "linear")) {
+        # "linear" is a reserved keyword meaning "no activation" (identity).
+        # It is *not* `torch::nnf_linear()`, which is an affine transform that
+        # requires its own `weight`/`bias` tensors, not a plain activation.
+        return(act_name)
+    }
+
     fn_name = paste0(prefix, act_name)
     
     if (!exists(fn_name, where = asNamespace("torch"), mode = "function")) {
@@ -231,32 +246,35 @@ validate_activation = function(act_name, prefix = "nnf_") {
 #'
 #' @noRd
 validate_args_formals = function(act_name, params, prefix = "nnf_") {
-    fn_name = paste0(prefix, act_name)
-    
-    if (!requireNamespace("torch", quietly = TRUE)) {
-        invisible(NULL)
+    if (identical(act_name, "linear")) {
+        # "linear" (identity) takes no parameters.
+        fn_formals = character(0)
+        fn_name = "linear"
+    } else if (!requireNamespace("torch", quietly = TRUE)) {
+        return(invisible(NULL))
     } else {
+        fn_name = paste0(prefix, act_name)
         fn = get(fn_name, envir = asNamespace("torch"))
         fn_formals = names(formals(fn))
         fn_formals = fn_formals[!fn_formals %in% c("input", "x", "...")]
-        
-        param_names = names(params)
-        # Only check named parameters
-        if (!is.null(param_names)) {
-            named_params = param_names[param_names != ""]
-            invalid_params = setdiff(named_params, fn_formals)
-            
-            if (length(invalid_params) > 0) {
-                valid_params_str = paste(fn_formals, collapse = ", ")
-                cli_abort(c(
-                    "Invalid parameter{?s} for {.fn {fn_name}}: {.arg {invalid_params}}.",
-                    i = "Valid parameters are: {.code {valid_params_str}}."
-                ), class = "activation_invalid_params_error")
-            }
-        }
-        
-        invisible(NULL)
     }
+
+    param_names = names(params)
+    # Only check named parameters
+    if (!is.null(param_names)) {
+        named_params = param_names[param_names != ""]
+        invalid_params = setdiff(named_params, fn_formals)
+
+        if (length(invalid_params) > 0) {
+            valid_params_str = paste(fn_formals, collapse = ", ")
+            cli_abort(c(
+                "Invalid parameter{?s} for {.fn {fn_name}}: {.arg {invalid_params}}.",
+                i = "Valid parameters are: {.code {valid_params_str}}."
+            ), class = "activation_invalid_params_error")
+        }
+    }
+
+    invisible(NULL)
 }
 
 #' Activation Function Specifications Parser
@@ -418,9 +436,14 @@ process_activations = function(activation_spec, prefix = "nnf_") {
     map2(act_names, act_params, function(name, params) {
         if (is.na(name)) {
             NULL
+        } else if (name == "linear") {
+            # "linear" means "no activation" (identity) — it is deliberately
+            # *not* routed through `torch::nnf_linear()`, which is an affine
+            # transform requiring its own weight/bias, not an activation.
+            function(x_expr) {
+                call2("identity", x_expr)
+            }
         } else if (name == "<custom>") {
-            # fn = attr(params, "act_fn")
-            # function(x_expr) call2(fn, x_expr)
             fn = params$fn
             local({
                 fn = fn
